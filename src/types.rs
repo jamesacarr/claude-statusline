@@ -68,15 +68,6 @@ pub struct AgentInfo {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(default)]
-pub struct TodoItem {
-    pub content: Option<String>,
-    pub status: Option<String>,
-    #[serde(alias = "activeForm")]
-    pub active_form: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,24 +192,6 @@ mod tests {
         let ctx = input.context_window.unwrap();
         assert_eq!(ctx.used_percentage, Some(8.0));
         assert_eq!(ctx.remaining_percentage, Some(92.0));
-    }
-
-    #[test]
-    fn deserializes_todo_item_with_active_form_alias() {
-        let json =
-            r#"{"content": "Fix the bug", "status": "in_progress", "activeForm": "Fix the bug"}"#;
-        let item: TodoItem = serde_json::from_str(json).unwrap();
-        assert_eq!(item.content, Some("Fix the bug".to_string()));
-        assert_eq!(item.status, Some("in_progress".to_string()));
-        assert_eq!(item.active_form, "Fix the bug");
-    }
-
-    #[test]
-    fn deserializes_todo_item_with_snake_case_active_form() {
-        let json =
-            r#"{"content": "Fix the bug", "status": "in_progress", "active_form": "Fix the bug"}"#;
-        let item: TodoItem = serde_json::from_str(json).unwrap();
-        assert_eq!(item.active_form, "Fix the bug");
     }
 
     #[test]
