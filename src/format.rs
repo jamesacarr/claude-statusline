@@ -156,7 +156,7 @@ mod tests {
             result.contains("\u{2588}"),
             "should contain bar graph filled blocks"
         );
-        assert!(result.contains("8%"), "should contain raw percentage");
+        assert!(result.contains("10%"), "should contain scaled percentage");
         // 8% of 200000 = 16000
         assert!(result.contains("(16.0k)"), "should contain token count");
     }

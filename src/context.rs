@@ -68,8 +68,8 @@ pub fn format_token_count(ctx: &Option<ContextWindow>) -> String {
 
 /// Render a 10-segment bar graph with color thresholds.
 ///
-/// `scaled_used` drives the bar fill count and color selection.
-/// `raw_used` is displayed as the text percentage (unscaled).
+/// `scaled_used` drives the bar fill count and is displayed as the text percentage.
+/// `raw_used` drives the color threshold selection (50/65/80).
 /// `token_display` is appended in parentheses after the percentage.
 pub fn render_bar(scaled_used: u32, raw_used: u32, token_display: &str, no_color: bool) -> String {
     let filled = (scaled_used / 10) as usize;
@@ -77,14 +77,14 @@ pub fn render_bar(scaled_used: u32, raw_used: u32, token_display: &str, no_color
     let bar: String = "\u{2588}".repeat(filled) + &"\u{2591}".repeat(empty);
 
     if no_color {
-        return format!(" {} {}% ({})", bar, raw_used, token_display);
+        return format!(" {} {}% ({})", bar, scaled_used, token_display);
     }
 
-    let (color, skull) = if scaled_used >= 95 {
+    let (color, skull) = if raw_used >= 80 {
         ("\x1b[5;31m", "\u{1F480} ")
-    } else if scaled_used >= 81 {
+    } else if raw_used >= 65 {
         ("\x1b[38;5;208m", "")
-    } else if scaled_used >= 63 {
+    } else if raw_used >= 50 {
         ("\x1b[33m", "")
     } else {
         ("\x1b[32m", "")
@@ -92,7 +92,7 @@ pub fn render_bar(scaled_used: u32, raw_used: u32, token_display: &str, no_color
 
     format!(
         " {}{}{} {}% ({})\x1b[0m",
-        color, skull, bar, raw_used, token_display
+        color, skull, bar, scaled_used, token_display
     )
 }
 
@@ -261,7 +261,7 @@ mod tests {
     fn render_bar_green_at_fifty_percent_scaled() {
         let result = render_bar(50, 40, "5.0k", false);
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
-        assert!(result.contains("40%"), "expected raw percentage 40%");
+        assert!(result.contains("50%"), "expected scaled percentage 50%");
         assert!(result.contains("(5.0k)"), "expected token display");
         // 50/10 = 5 filled blocks
         assert!(
@@ -276,7 +276,7 @@ mod tests {
     fn render_bar_yellow_at_seventy_percent_scaled() {
         let result = render_bar(70, 56, "8.2k", false);
         assert!(result.contains("\x1b[33m"), "expected yellow ANSI code");
-        assert!(result.contains("56%"), "expected raw percentage 56%");
+        assert!(result.contains("70%"), "expected scaled percentage 70%");
     }
 
     #[test]
@@ -286,7 +286,7 @@ mod tests {
             result.contains("\x1b[38;5;208m"),
             "expected orange 256-color ANSI code"
         );
-        assert!(result.contains("72%"), "expected raw percentage 72%");
+        assert!(result.contains("90%"), "expected scaled percentage 90%");
     }
 
     #[test]
@@ -296,7 +296,7 @@ mod tests {
             result.contains("\x1b[5;31m"),
             "expected blinking red ANSI code"
         );
-        assert!(result.contains("80%"), "expected raw percentage 80%");
+        assert!(result.contains("100%"), "expected scaled percentage 100%");
         assert!(result.contains("\u{1F480}"), "expected skull emoji");
     }
 
@@ -304,7 +304,7 @@ mod tests {
     fn render_bar_zero_percent_shows_all_empty_blocks() {
         let result = render_bar(0, 0, "0", false);
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
-        assert!(result.contains("0%"), "expected raw percentage 0%");
+        assert!(result.contains("0%"), "expected scaled percentage 0%");
         assert!(
             result.contains(
                 "\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
@@ -317,7 +317,7 @@ mod tests {
     fn render_bar_no_color_omits_ansi_sequences() {
         let result = render_bar(50, 40, "5.0k", true);
         assert!(!result.contains("\x1b["), "expected no ANSI sequences");
-        assert!(result.contains("40%"), "expected raw percentage 40%");
+        assert!(result.contains("50%"), "expected scaled percentage 50%");
         assert!(result.contains("(5.0k)"), "expected token display");
         assert!(
             !result.contains("\u{1F480}"),

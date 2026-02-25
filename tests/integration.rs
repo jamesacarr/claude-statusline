@@ -64,7 +64,7 @@ fn valid_full_input_exits_zero_and_contains_expected_output() {
         ))
         .stdout(predicate::str::contains("\u{2588}"))
         .stdout(predicate::str::contains("\u{2591}"))
-        .stdout(predicate::str::contains("8%"))
+        .stdout(predicate::str::contains("10%"))
         // current_usage input tokens: 12000 + 500 + 200 = 12700
         .stdout(predicate::str::contains("(12.7k)"));
 }
@@ -256,13 +256,13 @@ fn context_threshold_green_at_low_usage() {
         }
     }"#;
 
-    // raw_used=8, scaled=round((8/80)*100)=10 -> green (< 63)
+    // raw_used=8 -> green (< 50), scaled=10 -> displayed
     cmd()
         .write_stdin(json)
         .assert()
         .success()
         .stdout(predicate::str::contains("\x1b[32m"))
-        .stdout(predicate::str::contains("8%"));
+        .stdout(predicate::str::contains("10%"));
 }
 
 // --- Test 10: Context threshold orange ---
@@ -280,13 +280,13 @@ fn context_threshold_orange_at_high_usage() {
         }
     }"#;
 
-    // raw_used=70, scaled=round((70/80)*100)=88 -> orange (>= 81, < 95)
+    // raw_used=70 -> orange (>= 65, < 80), scaled=88 -> displayed
     cmd()
         .write_stdin(json)
         .assert()
         .success()
         .stdout(predicate::str::contains("\x1b[38;5;208m"))
-        .stdout(predicate::str::contains("70%"));
+        .stdout(predicate::str::contains("88%"));
 }
 
 // --- Test 11: Context threshold blinking red ---
@@ -304,13 +304,13 @@ fn context_threshold_blinking_red_at_critical_usage() {
         }
     }"#;
 
-    // raw_used=96, scaled=round((96/80)*100)=120, clamped to 100 -> blinking red (>= 95)
+    // raw_used=96 -> blinking red (>= 80), scaled=clamped to 100 -> displayed
     cmd()
         .write_stdin(json)
         .assert()
         .success()
         .stdout(predicate::str::contains("\x1b[5;31m"))
-        .stdout(predicate::str::contains("96%"));
+        .stdout(predicate::str::contains("100%"));
 }
 
 // --- Test 12: Separator between dir and context bar ---
