@@ -16,10 +16,8 @@ fn run() -> Result<String, Box<dyn std::error::Error>> {
     // Parse JSON
     let data: claude_statusline::types::StatusInput = serde_json::from_str(&input)?;
 
-    // Check NO_COLOR -- presence of the variable (any value including empty) disables color
     // Do NOT check is_terminal() -- Claude Code pipes stdin/stdout and renders ANSI itself
-    let no_color = std::env::var("NO_COLOR").is_ok();
 
     // Build statusline
-    Ok(claude_statusline::format::build_statusline(&data, no_color))
+    Ok(claude_statusline::format::build_statusline(&data))
 }
