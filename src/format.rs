@@ -149,7 +149,7 @@ mod tests {
             "should contain model name"
         );
         assert!(
-            result.contains(".../Git/jamesacarr/claude-statusline"),
+            result.contains("…/Git/jamesacarr/claude-statusline"),
             "should contain truncated directory"
         );
         assert!(
@@ -304,7 +304,7 @@ mod tests {
 
         let result = super::build_statusline(&input, false);
         assert!(
-            result.contains(".../jamescarr/projects/myapp"),
+            result.contains("…/jamescarr/projects/myapp"),
             "should use cwd when workspace is missing: {}",
             result
         );

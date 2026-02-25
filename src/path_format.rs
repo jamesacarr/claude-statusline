@@ -1,6 +1,6 @@
 use std::path::{Component, Path};
 
-/// Truncate a directory path to the last 3 components with `...` prefix
+/// Truncate a directory path to the last 3 components with `…` prefix
 /// when the path has more than 3 non-root components.
 pub fn format_directory(path: &str) -> String {
     if path.is_empty() {
@@ -18,7 +18,7 @@ pub fn format_directory(path: &str) -> String {
 
     if non_root.len() > 3 {
         let last_three = &non_root[non_root.len() - 3..];
-        format!(".../{}", last_three.join("/"))
+        format!("…/{}", last_three.join("/"))
     } else if non_root.is_empty() {
         // Root path or equivalent
         "/".to_string()
@@ -35,7 +35,7 @@ mod tests {
     fn truncates_five_component_path_to_last_three_with_ellipsis_prefix() {
         assert_eq!(
             format_directory("/Users/jamescarr/Git/jamesacarr/claude-statusline"),
-            ".../Git/jamesacarr/claude-statusline"
+            "…/Git/jamesacarr/claude-statusline"
         );
     }
 
@@ -43,7 +43,7 @@ mod tests {
     fn truncates_four_component_path_to_last_three_with_ellipsis_prefix() {
         assert_eq!(
             format_directory("/Users/jamescarr/Git/jamesacarr"),
-            ".../jamescarr/Git/jamesacarr"
+            "…/jamescarr/Git/jamesacarr"
         );
     }
 
@@ -82,7 +82,7 @@ mod tests {
     fn handles_path_with_spaces_in_components() {
         assert_eq!(
             format_directory("/Users/james carr/My Project/foo/bar"),
-            ".../My Project/foo/bar"
+            "…/My Project/foo/bar"
         );
     }
 

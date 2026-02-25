@@ -60,7 +60,7 @@ fn valid_full_input_exits_zero_and_contains_expected_output() {
         .success()
         .stdout(predicate::str::contains("Claude Opus 4"))
         .stdout(predicate::str::contains(
-            ".../Git/jamesacarr/claude-statusline",
+            "…/Git/jamesacarr/claude-statusline",
         ))
         .stdout(predicate::str::contains("\u{2588}"))
         .stdout(predicate::str::contains("\u{2591}"))
@@ -210,7 +210,7 @@ fn deep_directory_path_is_truncated_in_output() {
         .assert()
         .success()
         .stdout(predicate::str::contains(
-            ".../Git/jamesacarr/claude-statusline",
+            "…/Git/jamesacarr/claude-statusline",
         ));
 }
 
@@ -236,8 +236,8 @@ fn short_directory_path_is_not_truncated() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("/tmp"), "should contain /tmp");
     assert!(
-        !stdout.contains(".../tmp"),
-        "should not prefix short path with .../"
+        !stdout.contains("…/tmp"),
+        "should not prefix short path with …/"
     );
 }
 
