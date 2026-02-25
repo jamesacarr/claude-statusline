@@ -160,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn build_statusline_without_task_has_two_segments() {
+    fn build_statusline_with_context_has_three_segments() {
         let input = StatusInput {
             model: Some(ModelInfo {
                 display_name: Some("Opus".to_string()),
@@ -184,10 +184,66 @@ mod tests {
         // The separator is \u{2502} (box drawing vertical)
         let separator = " \u{2502} ";
         let segment_count = result.split(separator).count();
-        // Without task: model | dir+context = 2 segments
+        // With context: model | dir | context_bar = 3 segments
+        assert_eq!(
+            segment_count, 3,
+            "expected 3 segments with context, got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_without_context_has_two_segments() {
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some("/tmp".to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let result = super::build_statusline(&input, false);
+
+        // The separator is \u{2502} (box drawing vertical)
+        let separator = " \u{2502} ";
+        let segment_count = result.split(separator).count();
+        // Without context: model | dir = 2 segments
         assert_eq!(
             segment_count, 2,
-            "expected 2 segments without task, got: {}",
+            "expected 2 segments without context, got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_no_double_space_between_dir_and_context_bar() {
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some("/tmp".to_string()),
+                ..Default::default()
+            }),
+            context_window: Some(ContextWindow {
+                used_percentage: Some(50.0),
+                total_input_tokens: Some(5000),
+                total_output_tokens: Some(0),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let result = super::build_statusline(&input, false);
+
+        assert!(
+            !result.contains("\u{2502}  "),
+            "should not contain separator followed by two spaces, got: {}",
             result
         );
     }
