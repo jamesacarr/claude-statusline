@@ -48,12 +48,13 @@
 | JSON deserialization (all fields, edge cases) | `src/types.rs` | Unit, inline JSON fixtures |
 | Path truncation logic | `src/path_format.rs` | Unit, string assertions |
 | Context usage computation and clamping | `src/context.rs` | Unit, numeric assertions |
-| Bar rendering, color thresholds | `src/context.rs` | Unit, ANSI escape assertions |
+| Bar rendering, color thresholds, no-color | `src/context.rs` | Unit, ANSI escape assertions |
 | ANSI dim/bold helpers | `src/format.rs` | Unit |
 | Full statusline assembly | `src/format.rs` | Unit, struct construction |
 | Bridge file write, path traversal guards | `src/bridge.rs` | Unit, tempdir |
 | Todo file lookup, mtime ordering | `src/todos.rs` | Unit, tempdir |
 | Binary stdin/stdout pipeline | `tests/integration.rs` | Integration, assert_cmd |
+| NO_COLOR env variable | `tests/integration.rs` | Integration, env injection |
 | Error resilience (empty/invalid stdin) | `src/main.rs`, `tests/integration.rs` | Unit + integration |
 
 ### Prescriptive Guidance

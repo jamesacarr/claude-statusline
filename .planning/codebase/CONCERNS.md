@@ -7,6 +7,7 @@
 | Area | Description | Files | Severity |
 |------|------------|-------|----------|
 | Stale bridge file accumulation | Bridge files written to `$TMPDIR/claude-ctx-{session_id}.json` are never cleaned up. Long-running multi-session usage will accumulate files indefinitely with no TTL or cleanup mechanism. | `src/bridge.rs:12` | medium |
+| `TERM=dumb` not handled | `main.rs` explicitly checks `NO_COLOR` but never checks `TERM=dumb`. Terminals declaring `dumb` do not support ANSI codes. The comment acknowledges TTY detection was intentionally skipped but does not account for `TERM=dumb`. | `src/main.rs:19-21` | low |
 | Undocumented todo filename convention | The pattern `{session_id}-agent-{agent_id}.json` in `~/.claude/todos/` is matched empirically. It is not part of Claude Code's public statusline API. A naming change in Claude Code would silently break todo lookup. | `src/todos.rs:35` | medium |
 | No sanitisation of ANSI in input data | Model names and task descriptions from JSON are embedded directly in ANSI-coloured output strings without stripping potential embedded escape sequences. Corrupt or adversarial JSON could inject terminal escape codes. | `src/format.rs:82-91` | low |
 | 80% scaling is a magic constant | The bar graph scaling logic (`raw_used / 80.0 * 100.0`) treats 80% context usage as the effective maximum. This constant is not configurable and has no named constant explaining the rationale in code (it is only in a doc comment). | `src/context.rs:30` | low |
@@ -17,7 +18,7 @@
 
 - **`remaining_percentage` and `used_percentage` are null early in sessions**: Documented Claude Code behaviour. The code handles this by returning `None` from `compute_usage`, which causes the context bar to be omitted. Any new feature that assumes these fields are always present will behave incorrectly at session start. Affects: `src/context.rs:21-27`, `src/format.rs:68-71`.
 
-- **`is_terminal()` must not be used for color detection**: Claude Code pipes stdout; `is_terminal()` will always return false in normal operation. Using it to gate ANSI output would permanently disable colours. The binary always emits ANSI -- do not add TTY detection. See comment at `src/main.rs`.
+- **`is_terminal()` must not be used for color detection**: Claude Code pipes stdout; `is_terminal()` will always return false in normal operation. Using it to gate ANSI output would permanently disable colours. The current approach (`NO_COLOR` env var only) is intentional. See comment at `src/main.rs:20`.
 
 - **1 MB stdin cap is a hard truncation**: `stdin().take(1_048_576)` in `src/main.rs:13` silently truncates input exceeding 1 MB. Truncated JSON will fail deserialization and produce empty output. This is undocumented behaviour — a future large payload (e.g., if Claude Code adds base64 content) would silently fail.
 
@@ -35,7 +36,7 @@
 
 ## Do Not Touch
 
-- `src/main.rs` (comment about `is_terminal()`) -- the decision to skip TTY detection is load-bearing. The binary always emits ANSI codes. Do not add `is_terminal()` checks; Claude Code pipes stdout and renders ANSI itself.
+- `src/main.rs:20` (comment about `is_terminal()`) — the decision to skip TTY detection is load-bearing. Removing the `NO_COLOR` check or adding `is_terminal()` will break colour output in all normal Claude Code usage.
 - `src/bridge.rs:23-29` (session_id path traversal validation) — weakening or removing these guards opens a path traversal vulnerability when constructing filenames from external input.
 
 ### Prescriptive Guidance
