@@ -1,4 +1,5 @@
 use crate::context;
+use crate::git_branch;
 use crate::path_format;
 use crate::types::StatusInput;
 
@@ -38,6 +39,8 @@ pub fn build_statusline(input: &StatusInput) -> String {
 
     let formatted_dir = path_format::format_directory(directory);
 
+    let branch = git_branch::get_branch(directory);
+
     // Compute context usage
     let (remaining_pct, used_pct) = match &input.context_window {
         Some(cw) => (cw.remaining_percentage, cw.used_percentage),
@@ -58,18 +61,17 @@ pub fn build_statusline(input: &StatusInput) -> String {
     // Assemble output
     let model_segment = dim(model_name);
 
-    if context_bar.is_empty() {
-        format!("{}{}{}", model_segment, SEPARATOR, dim(&formatted_dir))
-    } else {
-        format!(
-            "{}{}{}{}{}",
-            model_segment,
-            SEPARATOR,
-            dim(&formatted_dir),
-            SEPARATOR,
-            context_bar
-        )
+    let mut segments = vec![model_segment, dim(&formatted_dir)];
+
+    if let Some(ref branch_name) = branch {
+        segments.push(dim(branch_name));
     }
+
+    if !context_bar.is_empty() {
+        segments.push(context_bar.to_string());
+    }
+
+    segments.join(SEPARATOR)
 }
 
 #[cfg(test)]
@@ -165,7 +167,7 @@ mod tests {
         // The separator is \u{2502} (box drawing vertical)
         let separator = " \u{2502} ";
         let segment_count = result.split(separator).count();
-        // With context: model | dir | context_bar = 3 segments
+        // With context, no git branch: model | dir | context_bar = 3 segments
         assert_eq!(
             segment_count, 3,
             "expected 3 segments with context, got: {}",
@@ -192,7 +194,7 @@ mod tests {
         // The separator is \u{2502} (box drawing vertical)
         let separator = " \u{2502} ";
         let segment_count = result.split(separator).count();
-        // Without context: model | dir = 2 segments
+        // Without context, no git branch: model | dir = 2 segments
         assert_eq!(
             segment_count, 2,
             "expected 2 segments without context, got: {}",
@@ -307,6 +309,130 @@ mod tests {
         assert!(
             result.contains("\u{2502}"),
             "should use box drawing vertical separator"
+        );
+    }
+
+    #[test]
+    fn build_statusline_without_branch_and_with_context_has_three_segments() {
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some("/tmp".to_string()),
+                ..Default::default()
+            }),
+            context_window: Some(ContextWindow {
+                used_percentage: Some(10.0),
+                total_input_tokens: Some(1000),
+                total_output_tokens: Some(0),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let result = super::build_statusline(&input);
+        let separator = " \u{2502} ";
+        let segment_count = result.split(separator).count();
+        assert_eq!(
+            segment_count, 3,
+            "expected 3 segments without branch: model | dir | context_bar, got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_without_branch_and_without_context_has_two_segments() {
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some("/tmp".to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let result = super::build_statusline(&input);
+        let separator = " \u{2502} ";
+        let segment_count = result.split(separator).count();
+        assert_eq!(
+            segment_count, 2,
+            "expected 2 segments without branch or context: model | dir, got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_with_branch_and_context_has_four_segments() {
+        let tmp = tempfile::tempdir().unwrap();
+        let git_dir = tmp.path().join(".git");
+        std::fs::create_dir(&git_dir).unwrap();
+        std::fs::write(git_dir.join("HEAD"), "ref: refs/heads/test-branch\n").unwrap();
+
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some(tmp.path().to_string_lossy().to_string()),
+                ..Default::default()
+            }),
+            context_window: Some(ContextWindow {
+                used_percentage: Some(10.0),
+                total_input_tokens: Some(1000),
+                total_output_tokens: Some(0),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let result = super::build_statusline(&input);
+        let separator = " \u{2502} ";
+        let segment_count = result.split(separator).count();
+        assert_eq!(
+            segment_count, 4,
+            "expected 4 segments with branch: model | dir | branch | context_bar, got: {}",
+            result
+        );
+        assert!(
+            result.contains("test-branch"),
+            "expected output to contain branch name 'test-branch', got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_with_branch_and_without_context_has_three_segments() {
+        let tmp = tempfile::tempdir().unwrap();
+        let git_dir = tmp.path().join(".git");
+        std::fs::create_dir(&git_dir).unwrap();
+        std::fs::write(git_dir.join("HEAD"), "ref: refs/heads/my-feature\n").unwrap();
+
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some(tmp.path().to_string_lossy().to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let result = super::build_statusline(&input);
+        let separator = " \u{2502} ";
+        let segment_count = result.split(separator).count();
+        assert_eq!(
+            segment_count, 3,
+            "expected 3 segments with branch but no context: model | dir | branch, got: {}",
+            result
+        );
+        assert!(
+            result.contains("my-feature"),
+            "expected output to contain branch name 'my-feature', got: {}",
+            result
         );
     }
 }
