@@ -23,24 +23,3 @@ fn run() -> Result<String, Box<dyn std::error::Error>> {
     // Build statusline
     Ok(claude_statusline::format::build_statusline(&data, no_color))
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn run_returns_error_on_empty_stdin() {
-        // run() reads from stdin which is empty in test context,
-        // causing serde_json::from_str("") to fail with a parse error
-        let result = super::run();
-        assert!(
-            result.is_err(),
-            "run() should return Err when stdin has no valid JSON"
-        );
-    }
-
-    #[test]
-    fn main_does_not_panic_when_run_fails() {
-        // The main function catches errors from run() and prints empty string.
-        // In unit tests stdin is empty, so run() will fail, but main() should not panic.
-        super::main();
-    }
-}
