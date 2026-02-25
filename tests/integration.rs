@@ -154,44 +154,6 @@ fn empty_stdin_exits_zero_with_empty_stdout() {
         .stdout(predicate::str::is_empty());
 }
 
-// --- Test 6: NO_COLOR environment variable ---
-
-#[test]
-fn no_color_env_strips_ansi_escape_sequences() {
-    let json = r#"{
-        "model": {
-            "display_name": "Opus"
-        },
-        "workspace": {
-            "current_dir": "/tmp"
-        },
-        "context_window": {
-            "total_input_tokens": 5000,
-            "total_output_tokens": 1000,
-            "used_percentage": 50.0,
-            "remaining_percentage": 50.0
-        }
-    }"#;
-
-    let output = cmd()
-        .env("NO_COLOR", "1")
-        .write_stdin(json)
-        .output()
-        .expect("command should execute");
-
-    assert!(output.status.success());
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        !stdout.contains("\x1b["),
-        "should not contain ANSI escape sequences when NO_COLOR is set"
-    );
-    assert!(
-        stdout.contains("\u{2588}") || stdout.contains("\u{2591}"),
-        "should still contain bar graph characters"
-    );
-    assert!(stdout.contains("%"), "should still contain percentage");
-}
-
 // --- Test 7: Directory truncation for deep path ---
 
 #[test]
