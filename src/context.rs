@@ -56,14 +56,10 @@ pub fn format_token_count(ctx: &Option<ContextWindow>) -> String {
 ///
 /// `raw_used` drives the bar fill, color threshold selection (50/65/80) and percentage display.
 /// `token_display` is appended in parentheses after the percentage.
-pub fn render_bar(raw_used: u32, token_display: &str, no_color: bool) -> String {
+pub fn render_bar(raw_used: u32, token_display: &str) -> String {
     let filled = (raw_used / 10) as usize;
     let empty = 10_usize.saturating_sub(filled);
     let bar: String = "\u{2588}".repeat(filled) + &"\u{2591}".repeat(empty);
-
-    if no_color {
-        return format!(" {} {}% ({})", bar, raw_used, token_display);
-    }
 
     let (color, skull) = if raw_used >= 80 {
         ("\x1b[5;31m", "\u{1F480} ")
@@ -230,7 +226,7 @@ mod tests {
 
     #[test]
     fn render_bar_green_below_fifty() {
-        let result = render_bar(40, "5.0k", false);
+        let result = render_bar(40, "5.0k");
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
         assert!(result.contains("40%"), "expected percentage 40%");
         assert!(result.contains("(5.0k)"), "expected token display");
@@ -245,14 +241,14 @@ mod tests {
 
     #[test]
     fn render_bar_yellow_at_fifty() {
-        let result = render_bar(56, "8.2k", false);
+        let result = render_bar(56, "8.2k");
         assert!(result.contains("\x1b[33m"), "expected yellow ANSI code");
         assert!(result.contains("56%"), "expected percentage 56%");
     }
 
     #[test]
     fn render_bar_orange_at_sixty_five() {
-        let result = render_bar(72, "15.3k", false);
+        let result = render_bar(72, "15.3k");
         assert!(
             result.contains("\x1b[38;5;208m"),
             "expected orange 256-color ANSI code"
@@ -262,7 +258,7 @@ mod tests {
 
     #[test]
     fn render_bar_blinking_red_with_skull_at_eighty() {
-        let result = render_bar(80, "20.0k", false);
+        let result = render_bar(80, "20.0k");
         assert!(
             result.contains("\x1b[5;31m"),
             "expected blinking red ANSI code"
@@ -273,7 +269,7 @@ mod tests {
 
     #[test]
     fn render_bar_zero_percent_shows_all_empty_blocks() {
-        let result = render_bar(0, "0", false);
+        let result = render_bar(0, "0");
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
         assert!(result.contains("0%"), "expected percentage 0%");
         assert!(
@@ -281,18 +277,6 @@ mod tests {
                 "\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
             ),
             "expected 10 empty blocks"
-        );
-    }
-
-    #[test]
-    fn render_bar_no_color_omits_ansi_sequences() {
-        let result = render_bar(40, "5.0k", true);
-        assert!(!result.contains("\x1b["), "expected no ANSI sequences");
-        assert!(result.contains("40%"), "expected percentage 40%");
-        assert!(result.contains("(5.0k)"), "expected token display");
-        assert!(
-            !result.contains("\u{1F480}"),
-            "expected no skull emoji in no_color mode"
         );
     }
 }
