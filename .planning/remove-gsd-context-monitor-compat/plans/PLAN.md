@@ -1,10 +1,10 @@
 ---
 task_id: remove-gsd-context-monitor-compat
 title: Remove gsd-context-monitor.js compatibility layer
-status: planning
+status: executing
 created: 2026-02-25T02:27:19Z
-updated: 2026-02-25T02:50:00Z
-current_wave: null
+updated: 2026-02-25T02:34:46Z
+current_wave: 3
 current_task: null
 pause_reason: null
 ---
@@ -32,10 +32,10 @@ When this plan is complete, all code, types, tests, imports, and module declarat
 2. **No new `#[allow(dead_code)]` annotations:** Verify by grepping `src/` for `allow(dead_code)` -- count must not increase from zero.
 
 ## Wave 1: Delete bridge module and remove module declaration
-Status: pending
+Status: completed
 
 ### Task 1.1: Delete src/bridge.rs
-- **Status:** pending
+- **Status:** passed
 - **Files affected:** `src/bridge.rs`
 - **Action:** Delete the file `src/bridge.rs` entirely. This file contains 174 lines: the `write_bridge()` and `write_bridge_to()` functions, session ID validation guards, atomic file write logic, and 7 unit tests -- all exclusively serving gsd-context-monitor.js compatibility.
 - **Verification:** `test ! -f src/bridge.rs`
@@ -44,7 +44,7 @@ Status: pending
 - **Last failure:** null
 
 ### Task 1.2: Remove bridge module declaration from src/lib.rs
-- **Status:** pending
+- **Status:** passed
 - **Files affected:** `src/lib.rs`
 - **Action:** Remove line 1 (`pub mod bridge;`) from `src/lib.rs`. The remaining module declarations (`context`, `format`, `path_format`, `todos`, `types`) are unchanged. After this edit, `src/lib.rs` should contain 5 `pub mod` lines.
 - **Verification:** `grep -c 'bridge' src/lib.rs` returns 0 (exit code 1)
@@ -53,10 +53,10 @@ Status: pending
 - **Last failure:** null
 
 ## Wave 2: Remove bridge references from format.rs and types.rs
-Status: pending
+Status: completed
 
 ### Task 2.1: Remove bridge import and call site from src/format.rs
-- **Status:** pending
+- **Status:** passed
 - **Files affected:** `src/format.rs`
 - **Action:** In `src/format.rs`, make two removals: (1) Remove line 1 (`use crate::bridge;`) -- the bridge import. (2) Remove lines 73-79 -- the bridge-writing block inside `build_statusline()` which reads:
   ```rust
@@ -75,7 +75,7 @@ Status: pending
 - **Last failure:** null
 
 ### Task 2.2: Remove BridgeData struct, its test, and clean up Serialize import from src/types.rs
-- **Status:** pending
+- **Status:** passed
 - **Files affected:** `src/types.rs`
 - **Action:** In `src/types.rs`, make three changes: (1) On line 1, change `use serde::{Deserialize, Serialize};` to `use serde::Deserialize;` -- `Serialize` is only used by `BridgeData` and no other struct in this file derives it. (2) Remove lines 80-87 -- the `BridgeData` struct and its doc comment (`/// Bridge data written for gsd-context-monitor.js compatibility.`). (3) Remove lines 233-246 -- the `serializes_bridge_data` test inside `mod tests`. Preserve all surrounding code: `TodoItem` (lines 71-78) remains above the removal site, and the `deserializes_null_optional_fields_as_none` test (currently lines 248-255) remains after.
 - **Verification:** `grep -c 'BridgeData\|Serialize\|bridge' src/types.rs` returns 0 (exit code 1)
@@ -84,10 +84,10 @@ Status: pending
 - **Last failure:** null
 
 ## Wave 3: Compile, test, and lint verification
-Status: pending
+Status: in_progress
 
 ### Task 3.1: Verify clean build and all tests pass
-- **Status:** pending
+- **Status:** passed
 - **Files affected:** (none -- verification only)
 - **Action:** Run the full build and test suite from the project root to confirm the removal is complete and no dangling references remain. The Rust compiler will catch any missed imports or type references at compile time. Execute `cargo build` followed by `cargo test`. All remaining tests must pass. Expect 8 fewer tests than before (7 from deleted `bridge.rs`, 1 `serializes_bridge_data` from `types.rs`).
 - **Verification:** `cargo test`
