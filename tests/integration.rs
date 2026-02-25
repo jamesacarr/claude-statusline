@@ -311,3 +311,35 @@ fn context_threshold_blinking_red_at_critical_usage() {
         .stdout(predicate::str::contains("\x1b[5;31m"))
         .stdout(predicate::str::contains("96%"));
 }
+
+// --- Test 12: Separator between dir and context bar ---
+
+#[test]
+fn full_input_has_separator_between_dir_and_context_bar() {
+    let output = cmd()
+        .write_stdin(full_json())
+        .output()
+        .expect("command should execute");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // The statusline should have the structure: model | dir | context_bar
+    // Split on the box-drawing separator to confirm three segments exist
+    let separator = " \u{2502} ";
+    let segments: Vec<&str> = stdout.trim_end().split(separator).collect();
+    assert_eq!(
+        segments.len(),
+        3,
+        "expected 3 segments (model | dir | context_bar), got {}: {:?}",
+        segments.len(),
+        stdout
+    );
+
+    // The third segment must contain bar graph characters, confirming context_bar is present
+    assert!(
+        segments[2].contains('\u{2588}') || segments[2].contains('\u{2591}'),
+        "third segment should contain bar graph characters: {:?}",
+        segments[2]
+    );
+}
