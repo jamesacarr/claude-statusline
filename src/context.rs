@@ -1,14 +1,5 @@
 use crate::types::ContextWindow;
 
-/// Holds both the raw (unscaled) and scaled usage percentages.
-#[derive(Debug, PartialEq)]
-pub struct UsageInfo {
-    /// Raw used percentage (0-100), from `used_percentage` or derived from `remaining_percentage`.
-    pub raw_used: u32,
-    /// Scaled to 80% ceiling for bar graph display (0-100).
-    pub scaled_used: u32,
-}
-
 /// Compute context usage from optional remaining and used percentages.
 ///
 /// Prefers `used_percentage` if available. Falls back to deriving from
@@ -17,7 +8,7 @@ pub struct UsageInfo {
 pub fn compute_usage(
     remaining_percentage: Option<f64>,
     used_percentage: Option<f64>,
-) -> Option<UsageInfo> {
+) -> Option<u32> {
     let raw_used_f = if let Some(used) = used_percentage {
         used
     } else if let Some(remaining) = remaining_percentage {
@@ -27,12 +18,7 @@ pub fn compute_usage(
     };
 
     let raw_used = raw_used_f.round().clamp(0.0, 100.0) as u32;
-    let scaled_used = ((raw_used as f64 / 80.0) * 100.0).round().clamp(0.0, 100.0) as u32;
-
-    Some(UsageInfo {
-        raw_used,
-        scaled_used,
-    })
+    Some(raw_used)
 }
 
 /// Format context window token usage from ContextWindow.
@@ -68,16 +54,15 @@ pub fn format_token_count(ctx: &Option<ContextWindow>) -> String {
 
 /// Render a 10-segment bar graph with color thresholds.
 ///
-/// `scaled_used` drives the bar fill count and is displayed as the text percentage.
-/// `raw_used` drives the color threshold selection (50/65/80).
+/// `raw_used` drives the bar fill, color threshold selection (50/65/80) and percentage display.
 /// `token_display` is appended in parentheses after the percentage.
-pub fn render_bar(scaled_used: u32, raw_used: u32, token_display: &str, no_color: bool) -> String {
-    let filled = (scaled_used / 10) as usize;
+pub fn render_bar(raw_used: u32, token_display: &str, no_color: bool) -> String {
+    let filled = (raw_used / 10) as usize;
     let empty = 10_usize.saturating_sub(filled);
     let bar: String = "\u{2588}".repeat(filled) + &"\u{2591}".repeat(empty);
 
     if no_color {
-        return format!(" {} {}% ({})", bar, scaled_used, token_display);
+        return format!(" {} {}% ({})", bar, raw_used, token_display);
     }
 
     let (color, skull) = if raw_used >= 80 {
@@ -92,7 +77,7 @@ pub fn render_bar(scaled_used: u32, raw_used: u32, token_display: &str, no_color
 
     format!(
         " {}{}{} {}% ({})\x1b[0m",
-        color, skull, bar, scaled_used, token_display
+        color, skull, bar, raw_used, token_display
     )
 }
 
@@ -105,30 +90,22 @@ mod tests {
 
     #[test]
     fn compute_usage_prefers_used_percentage_over_remaining() {
-        let result = compute_usage(Some(92.0), Some(8.0)).unwrap();
-        assert_eq!(result.raw_used, 8);
-        assert_eq!(result.scaled_used, 10);
+        assert_eq!(compute_usage(Some(92.0), Some(8.0)), Some(8));
     }
 
     #[test]
-    fn compute_usage_at_full_returns_clamped_scaled() {
-        let result = compute_usage(Some(0.0), Some(100.0)).unwrap();
-        assert_eq!(result.raw_used, 100);
-        assert_eq!(result.scaled_used, 100);
+    fn compute_usage_at_full_returns_hundred() {
+        assert_eq!(compute_usage(Some(0.0), Some(100.0)), Some(100));
     }
 
     #[test]
     fn compute_usage_at_zero_returns_zero() {
-        let result = compute_usage(Some(100.0), Some(0.0)).unwrap();
-        assert_eq!(result.raw_used, 0);
-        assert_eq!(result.scaled_used, 0);
+        assert_eq!(compute_usage(Some(100.0), Some(0.0)), Some(0));
     }
 
     #[test]
-    fn compute_usage_at_eighty_percent_scales_to_one_hundred() {
-        let result = compute_usage(Some(20.0), Some(80.0)).unwrap();
-        assert_eq!(result.raw_used, 80);
-        assert_eq!(result.scaled_used, 100);
+    fn compute_usage_at_eighty_percent() {
+        assert_eq!(compute_usage(Some(20.0), Some(80.0)), Some(80));
     }
 
     #[test]
@@ -138,30 +115,24 @@ mod tests {
 
     #[test]
     fn compute_usage_falls_back_to_remaining_when_used_is_none() {
-        let result = compute_usage(Some(92.0), None).unwrap();
-        assert_eq!(result.raw_used, 8);
-        assert_eq!(result.scaled_used, 10);
+        assert_eq!(compute_usage(Some(92.0), None), Some(8));
     }
 
     #[test]
     fn compute_usage_uses_used_percentage_when_remaining_is_none() {
-        let result = compute_usage(None, Some(8.0)).unwrap();
-        assert_eq!(result.raw_used, 8);
-        assert_eq!(result.scaled_used, 10);
+        assert_eq!(compute_usage(None, Some(8.0)), Some(8));
     }
 
     #[test]
-    fn compute_usage_clamps_negative_remaining_to_max_raw() {
+    fn compute_usage_clamps_negative_remaining_to_max() {
         // remaining = -5 -> raw_used = 100 - (-5) = 105, clamped to 100
-        let result = compute_usage(Some(-5.0), None).unwrap();
-        assert_eq!(result.raw_used, 100);
+        assert_eq!(compute_usage(Some(-5.0), None), Some(100));
     }
 
     #[test]
-    fn compute_usage_clamps_large_remaining_to_zero_raw() {
+    fn compute_usage_clamps_large_remaining_to_zero() {
         // remaining = 150 -> raw_used = 100 - 150 = -50, clamped to 0
-        let result = compute_usage(Some(150.0), None).unwrap();
-        assert_eq!(result.raw_used, 0);
+        assert_eq!(compute_usage(Some(150.0), None), Some(0));
     }
 
     // --- format_token_count tests ---
@@ -258,53 +229,53 @@ mod tests {
     // --- render_bar tests ---
 
     #[test]
-    fn render_bar_green_at_fifty_percent_scaled() {
-        let result = render_bar(50, 40, "5.0k", false);
+    fn render_bar_green_below_fifty() {
+        let result = render_bar(40, "5.0k", false);
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
-        assert!(result.contains("50%"), "expected scaled percentage 50%");
+        assert!(result.contains("40%"), "expected percentage 40%");
         assert!(result.contains("(5.0k)"), "expected token display");
-        // 50/10 = 5 filled blocks
+        // 40/10 = 4 filled blocks
         assert!(
             result.contains(
-                "\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
+                "\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
             ),
-            "expected 5 filled + 5 empty blocks"
+            "expected 4 filled + 6 empty blocks"
         );
     }
 
     #[test]
-    fn render_bar_yellow_at_seventy_percent_scaled() {
-        let result = render_bar(70, 56, "8.2k", false);
+    fn render_bar_yellow_at_fifty() {
+        let result = render_bar(56, "8.2k", false);
         assert!(result.contains("\x1b[33m"), "expected yellow ANSI code");
-        assert!(result.contains("70%"), "expected scaled percentage 70%");
+        assert!(result.contains("56%"), "expected percentage 56%");
     }
 
     #[test]
-    fn render_bar_orange_at_ninety_percent_scaled() {
-        let result = render_bar(90, 72, "15.3k", false);
+    fn render_bar_orange_at_sixty_five() {
+        let result = render_bar(72, "15.3k", false);
         assert!(
             result.contains("\x1b[38;5;208m"),
             "expected orange 256-color ANSI code"
         );
-        assert!(result.contains("90%"), "expected scaled percentage 90%");
+        assert!(result.contains("72%"), "expected percentage 72%");
     }
 
     #[test]
-    fn render_bar_blinking_red_with_skull_at_full_scaled() {
-        let result = render_bar(100, 80, "20.0k", false);
+    fn render_bar_blinking_red_with_skull_at_eighty() {
+        let result = render_bar(80, "20.0k", false);
         assert!(
             result.contains("\x1b[5;31m"),
             "expected blinking red ANSI code"
         );
-        assert!(result.contains("100%"), "expected scaled percentage 100%");
+        assert!(result.contains("80%"), "expected percentage 80%");
         assert!(result.contains("\u{1F480}"), "expected skull emoji");
     }
 
     #[test]
     fn render_bar_zero_percent_shows_all_empty_blocks() {
-        let result = render_bar(0, 0, "0", false);
+        let result = render_bar(0, "0", false);
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
-        assert!(result.contains("0%"), "expected scaled percentage 0%");
+        assert!(result.contains("0%"), "expected percentage 0%");
         assert!(
             result.contains(
                 "\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
@@ -315,9 +286,9 @@ mod tests {
 
     #[test]
     fn render_bar_no_color_omits_ansi_sequences() {
-        let result = render_bar(50, 40, "5.0k", true);
+        let result = render_bar(40, "5.0k", true);
         assert!(!result.contains("\x1b["), "expected no ANSI sequences");
-        assert!(result.contains("50%"), "expected scaled percentage 50%");
+        assert!(result.contains("40%"), "expected percentage 40%");
         assert!(result.contains("(5.0k)"), "expected token display");
         assert!(
             !result.contains("\u{1F480}"),

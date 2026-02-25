@@ -58,7 +58,7 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
 
     // Render context bar (if usage data available)
     let context_bar = match &usage {
-        Some(u) => context::render_bar(u.scaled_used, u.raw_used, &token_display, no_color),
+        Some(u) => context::render_bar(*u, &token_display, no_color),
         None => String::new(),
     };
     let context_bar = context_bar.trim_start();
@@ -132,11 +132,11 @@ mod tests {
             }),
             session_id: Some("test-session".to_string()),
             context_window: Some(ContextWindow {
-                remaining_percentage: Some(92.0),
-                used_percentage: Some(8.0),
+                remaining_percentage: Some(70.0),
+                used_percentage: Some(30.0),
                 context_window_size: Some(200000),
-                total_input_tokens: Some(15234),
-                total_output_tokens: Some(4521),
+                total_input_tokens: Some(55000),
+                total_output_tokens: Some(15000),
                 ..Default::default()
             }),
             ..Default::default()
@@ -156,9 +156,13 @@ mod tests {
             result.contains("\u{2588}"),
             "should contain bar graph filled blocks"
         );
-        assert!(result.contains("10%"), "should contain scaled percentage");
-        // 8% of 200000 = 16000
-        assert!(result.contains("(16.0k)"), "should contain token count");
+        assert!(
+            result.contains("\u{2591}"),
+            "should contain bar graph empty blocks"
+        );
+        assert!(result.contains("30%"), "should contain usage percentage");
+        // 30% of 200000 = 60000
+        assert!(result.contains("(60.0k)"), "should contain token count");
     }
 
     #[test]
