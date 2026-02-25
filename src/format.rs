@@ -1,4 +1,3 @@
-use crate::bridge;
 use crate::context;
 use crate::path_format;
 use crate::todos;
@@ -69,14 +68,6 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
         Some(u) => context::render_bar(u.scaled_used, u.raw_used, &token_display, no_color),
         None => String::new(),
     };
-
-    // Write bridge file (best-effort, only if session and remaining exist)
-    if !session_id.is_empty() {
-        if let Some(remaining) = remaining_pct {
-            let scaled = usage.as_ref().map(|u| u.scaled_used).unwrap_or(0);
-            bridge::write_bridge(session_id, remaining, scaled);
-        }
-    }
 
     // Assemble output
     let model_segment = dim(model_name, no_color);
