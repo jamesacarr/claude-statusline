@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Top-level input from Claude Code JSON piped via stdin.
 #[derive(Debug, Default, Deserialize)]
@@ -75,15 +75,6 @@ pub struct TodoItem {
     pub status: Option<String>,
     #[serde(alias = "activeForm")]
     pub active_form: String,
-}
-
-/// Bridge data written for gsd-context-monitor.js compatibility.
-#[derive(Debug, Serialize)]
-pub struct BridgeData {
-    pub session_id: String,
-    pub remaining_percentage: f64,
-    pub used_pct: u32,
-    pub timestamp: u64,
 }
 
 #[cfg(test)]
@@ -228,21 +219,6 @@ mod tests {
             r#"{"content": "Fix the bug", "status": "in_progress", "active_form": "Fix the bug"}"#;
         let item: TodoItem = serde_json::from_str(json).unwrap();
         assert_eq!(item.active_form, "Fix the bug");
-    }
-
-    #[test]
-    fn serializes_bridge_data() {
-        let bridge = BridgeData {
-            session_id: "abc-123".to_string(),
-            remaining_percentage: 92.0,
-            used_pct: 10,
-            timestamp: 1700000000,
-        };
-        let json = serde_json::to_string(&bridge).unwrap();
-        assert!(json.contains("\"session_id\":\"abc-123\""));
-        assert!(json.contains("\"remaining_percentage\":92.0"));
-        assert!(json.contains("\"used_pct\":10"));
-        assert!(json.contains("\"timestamp\":1700000000"));
     }
 
     #[test]
