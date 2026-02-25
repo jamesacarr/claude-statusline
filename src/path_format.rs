@@ -57,10 +57,7 @@ mod tests {
 
     #[test]
     fn returns_two_component_path_unchanged() {
-        assert_eq!(
-            format_directory("/Users/jamescarr"),
-            "/Users/jamescarr"
-        );
+        assert_eq!(format_directory("/Users/jamescarr"), "/Users/jamescarr");
     }
 
     #[test]

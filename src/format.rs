@@ -86,7 +86,11 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
         Some(task) => {
             format!(
                 "{}{}{}{}{}",
-                model_segment, SEPARATOR, bold(&task, no_color), SEPARATOR, dir_segment
+                model_segment,
+                SEPARATOR,
+                bold(&task, no_color),
+                SEPARATOR,
+                dir_segment
             )
         }
         None => {
@@ -153,12 +157,18 @@ mod tests {
 
         let result = super::build_statusline(&input, false);
 
-        assert!(result.contains("Claude Opus 4"), "should contain model name");
+        assert!(
+            result.contains("Claude Opus 4"),
+            "should contain model name"
+        );
         assert!(
             result.contains(".../Git/jamesacarr/claude-statusline"),
             "should contain truncated directory"
         );
-        assert!(result.contains("\u{2588}"), "should contain bar graph filled blocks");
+        assert!(
+            result.contains("\u{2588}"),
+            "should contain bar graph filled blocks"
+        );
         assert!(result.contains("8%"), "should contain raw percentage");
         assert!(result.contains("(19.8k)"), "should contain token count");
     }
@@ -189,7 +199,11 @@ mod tests {
         let separator = " \u{2502} ";
         let segment_count = result.split(separator).count();
         // Without task: model | dir+context = 2 segments
-        assert_eq!(segment_count, 2, "expected 2 segments without task, got: {}", result);
+        assert_eq!(
+            segment_count, 2,
+            "expected 2 segments without task, got: {}",
+            result
+        );
     }
 
     #[test]
@@ -212,8 +226,14 @@ mod tests {
 
         let result = super::build_statusline(&input, false);
 
-        assert!(!result.contains("\u{2588}"), "should not contain filled bar blocks");
-        assert!(!result.contains("\u{2591}"), "should not contain empty bar blocks");
+        assert!(
+            !result.contains("\u{2588}"),
+            "should not contain filled bar blocks"
+        );
+        assert!(
+            !result.contains("\u{2591}"),
+            "should not contain empty bar blocks"
+        );
     }
 
     #[test]
@@ -221,7 +241,10 @@ mod tests {
         let input = StatusInput::default();
         let result = super::build_statusline(&input, false);
         // Should produce some output (at minimum the model fallback "Claude")
-        assert!(result.contains("Claude"), "should contain default model name");
+        assert!(
+            result.contains("Claude"),
+            "should contain default model name"
+        );
     }
 
     #[test]
@@ -258,6 +281,9 @@ mod tests {
         };
 
         let result = super::build_statusline(&input, false);
-        assert!(result.contains("\u{2502}"), "should use box drawing vertical separator");
+        assert!(
+            result.contains("\u{2502}"),
+            "should use box drawing vertical separator"
+        );
     }
 }

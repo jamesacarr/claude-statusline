@@ -1,5 +1,5 @@
-use assert_cmd::cargo::cargo_bin_cmd;
 use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use predicates::prelude::*;
 
 /// Helper to build a Command for the claude-statusline binary.
@@ -59,7 +59,9 @@ fn valid_full_input_exits_zero_and_contains_expected_output() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Claude Opus 4"))
-        .stdout(predicate::str::contains(".../Git/jamesacarr/claude-statusline"))
+        .stdout(predicate::str::contains(
+            ".../Git/jamesacarr/claude-statusline",
+        ))
         .stdout(predicate::str::contains("\u{2588}"))
         .stdout(predicate::str::contains("\u{2591}"))
         .stdout(predicate::str::contains("8%"))

@@ -135,7 +135,10 @@ mod tests {
 
         assert_eq!(input.cwd, Some("/Users/test/project".to_string()));
         assert_eq!(input.session_id, Some("abc-123".to_string()));
-        assert_eq!(input.transcript_path, Some("/tmp/transcript.json".to_string()));
+        assert_eq!(
+            input.transcript_path,
+            Some("/tmp/transcript.json".to_string())
+        );
         assert_eq!(input.version, Some("1.0.0".to_string()));
         assert_eq!(input.exceeds_200k_tokens, Some(false));
 
@@ -144,8 +147,14 @@ mod tests {
         assert_eq!(model.display_name, Some("Claude Opus 4".to_string()));
 
         let workspace = input.workspace.unwrap();
-        assert_eq!(workspace.current_dir, Some("/Users/test/project".to_string()));
-        assert_eq!(workspace.project_dir, Some("/Users/test/project".to_string()));
+        assert_eq!(
+            workspace.current_dir,
+            Some("/Users/test/project".to_string())
+        );
+        assert_eq!(
+            workspace.project_dir,
+            Some("/Users/test/project".to_string())
+        );
 
         let cost = input.cost.unwrap();
         assert_eq!(cost.total_cost_usd, Some(0.05));
@@ -205,7 +214,8 @@ mod tests {
 
     #[test]
     fn deserializes_todo_item_with_active_form_alias() {
-        let json = r#"{"content": "Fix the bug", "status": "in_progress", "activeForm": "Fix the bug"}"#;
+        let json =
+            r#"{"content": "Fix the bug", "status": "in_progress", "activeForm": "Fix the bug"}"#;
         let item: TodoItem = serde_json::from_str(json).unwrap();
         assert_eq!(item.content, Some("Fix the bug".to_string()));
         assert_eq!(item.status, Some("in_progress".to_string()));
@@ -214,7 +224,8 @@ mod tests {
 
     #[test]
     fn deserializes_todo_item_with_snake_case_active_form() {
-        let json = r#"{"content": "Fix the bug", "status": "in_progress", "active_form": "Fix the bug"}"#;
+        let json =
+            r#"{"content": "Fix the bug", "status": "in_progress", "active_form": "Fix the bug"}"#;
         let item: TodoItem = serde_json::from_str(json).unwrap();
         assert_eq!(item.active_form, "Fix the bug");
     }

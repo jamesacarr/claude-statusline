@@ -94,8 +94,14 @@ mod tests {
         let content = fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        assert!(data["session_id"].is_string(), "session_id should be a string");
-        assert!(data["remaining_percentage"].is_f64(), "remaining_percentage should be a number");
+        assert!(
+            data["session_id"].is_string(),
+            "session_id should be a string"
+        );
+        assert!(
+            data["remaining_percentage"].is_f64(),
+            "remaining_percentage should be a number"
+        );
         assert!(data["used_pct"].is_u64(), "used_pct should be a number");
         assert!(data["timestamp"].is_u64(), "timestamp should be a number");
     }
@@ -107,7 +113,10 @@ mod tests {
         super::write_bridge_to(tmp.path(), "", 92.0, 10);
 
         let entries: Vec<_> = fs::read_dir(tmp.path()).unwrap().collect();
-        assert!(entries.is_empty(), "no file should be written for empty session_id");
+        assert!(
+            entries.is_empty(),
+            "no file should be written for empty session_id"
+        );
     }
 
     #[test]
@@ -117,7 +126,10 @@ mod tests {
         super::write_bridge_to(tmp.path(), "../etc", 92.0, 10);
 
         let entries: Vec<_> = fs::read_dir(tmp.path()).unwrap().collect();
-        assert!(entries.is_empty(), "no file should be written for path traversal session_id");
+        assert!(
+            entries.is_empty(),
+            "no file should be written for path traversal session_id"
+        );
     }
 
     #[test]
@@ -127,7 +139,10 @@ mod tests {
         super::write_bridge_to(tmp.path(), "foo/bar", 92.0, 10);
 
         let entries: Vec<_> = fs::read_dir(tmp.path()).unwrap().collect();
-        assert!(entries.is_empty(), "no file should be written for session_id containing slash");
+        assert!(
+            entries.is_empty(),
+            "no file should be written for session_id containing slash"
+        );
     }
 
     #[test]
@@ -137,7 +152,10 @@ mod tests {
         super::write_bridge_to(tmp.path(), "sess\0id", 92.0, 10);
 
         let entries: Vec<_> = fs::read_dir(tmp.path()).unwrap().collect();
-        assert!(entries.is_empty(), "no file should be written for session_id containing null byte");
+        assert!(
+            entries.is_empty(),
+            "no file should be written for session_id containing null byte"
+        );
     }
 
     #[test]

@@ -8,7 +8,10 @@ fn main() {
 fn run() -> Result<String, Box<dyn std::error::Error>> {
     // Read stdin with 1MB cap
     let mut input = String::new();
-    std::io::stdin().lock().take(1_048_576).read_to_string(&mut input)?;
+    std::io::stdin()
+        .lock()
+        .take(1_048_576)
+        .read_to_string(&mut input)?;
 
     // Parse JSON
     let data: claude_statusline::types::StatusInput = serde_json::from_str(&input)?;
@@ -28,7 +31,10 @@ mod tests {
         // run() reads from stdin which is empty in test context,
         // causing serde_json::from_str("") to fail with a parse error
         let result = super::run();
-        assert!(result.is_err(), "run() should return Err when stdin has no valid JSON");
+        assert!(
+            result.is_err(),
+            "run() should return Err when stdin has no valid JSON"
+        );
     }
 
     #[test]

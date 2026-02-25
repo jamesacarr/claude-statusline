@@ -32,10 +32,7 @@ pub(crate) fn get_current_task_from(base_dir: &Path, session_id: &str) -> Option
         let file_name = entry.file_name();
         let name = file_name.to_string_lossy();
 
-        if name.starts_with(session_id)
-            && name.contains("-agent-")
-            && name.ends_with(".json")
-        {
+        if name.starts_with(session_id) && name.contains("-agent-") && name.ends_with(".json") {
             if let Ok(metadata) = entry.metadata() {
                 if let Ok(mtime) = metadata.modified() {
                     matching.push((entry.path(), mtime));
@@ -77,12 +74,7 @@ mod tests {
     use tempfile::tempdir;
 
     // Helper to create a todo JSON file in the given directory
-    fn create_todo_file(
-        dir: &std::path::Path,
-        session_id: &str,
-        suffix: &str,
-        content: &str,
-    ) {
+    fn create_todo_file(dir: &std::path::Path, session_id: &str, suffix: &str, content: &str) {
         let filename = format!("{}-agent-{}.json", session_id, suffix);
         let path = dir.join(&filename);
         let mut file = fs::File::create(&path).unwrap();

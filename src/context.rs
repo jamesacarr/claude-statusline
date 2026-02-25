@@ -27,9 +27,7 @@ pub fn compute_usage(
     };
 
     let raw_used = raw_used_f.round().clamp(0.0, 100.0) as u32;
-    let scaled_used = ((raw_used as f64 / 80.0) * 100.0)
-        .round()
-        .clamp(0.0, 100.0) as u32;
+    let scaled_used = ((raw_used as f64 / 80.0) * 100.0).round().clamp(0.0, 100.0) as u32;
 
     Some(UsageInfo {
         raw_used,
@@ -215,7 +213,9 @@ mod tests {
         assert!(result.contains("(5.0k)"), "expected token display");
         // 50/10 = 5 filled blocks
         assert!(
-            result.contains("\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"),
+            result.contains(
+                "\u{2588}\u{2588}\u{2588}\u{2588}\u{2588}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
+            ),
             "expected 5 filled + 5 empty blocks"
         );
     }
@@ -230,14 +230,20 @@ mod tests {
     #[test]
     fn render_bar_orange_at_ninety_percent_scaled() {
         let result = render_bar(90, 72, "15.3k", false);
-        assert!(result.contains("\x1b[38;5;208m"), "expected orange 256-color ANSI code");
+        assert!(
+            result.contains("\x1b[38;5;208m"),
+            "expected orange 256-color ANSI code"
+        );
         assert!(result.contains("72%"), "expected raw percentage 72%");
     }
 
     #[test]
     fn render_bar_blinking_red_with_skull_at_full_scaled() {
         let result = render_bar(100, 80, "20.0k", false);
-        assert!(result.contains("\x1b[5;31m"), "expected blinking red ANSI code");
+        assert!(
+            result.contains("\x1b[5;31m"),
+            "expected blinking red ANSI code"
+        );
         assert!(result.contains("80%"), "expected raw percentage 80%");
         assert!(result.contains("\u{1F480}"), "expected skull emoji");
     }
@@ -248,7 +254,9 @@ mod tests {
         assert!(result.contains("\x1b[32m"), "expected green ANSI code");
         assert!(result.contains("0%"), "expected raw percentage 0%");
         assert!(
-            result.contains("\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"),
+            result.contains(
+                "\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}\u{2591}"
+            ),
             "expected 10 empty blocks"
         );
     }
@@ -259,6 +267,9 @@ mod tests {
         assert!(!result.contains("\x1b["), "expected no ANSI sequences");
         assert!(result.contains("40%"), "expected raw percentage 40%");
         assert!(result.contains("(5.0k)"), "expected token display");
-        assert!(!result.contains("\u{1F480}"), "expected no skull emoji in no_color mode");
+        assert!(
+            !result.contains("\u{1F480}"),
+            "expected no skull emoji in no_color mode"
+        );
     }
 }
