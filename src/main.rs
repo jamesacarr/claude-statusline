@@ -1,10 +1,7 @@
 use std::io::Read;
 
 fn main() {
-    let output = match run() {
-        Ok(line) => line,
-        Err(_) => String::new(),
-    };
+    let output = run().unwrap_or_default();
     print!("{}", output);
 }
 
