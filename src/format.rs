@@ -9,26 +9,18 @@ const RESET: &str = "\x1b[0m";
 /// Box drawing vertical line used as segment separator.
 const SEPARATOR: &str = " \u{2502} ";
 
-/// Wrap text in dim ANSI codes. Returns text unchanged when `no_color` is true.
-pub fn dim(text: &str, no_color: bool) -> String {
-    if no_color {
-        text.to_string()
-    } else {
-        format!("{}{}{}", DIM, text, RESET)
-    }
+/// Wrap text in dim ANSI codes.
+pub fn dim(text: &str) -> String {
+    format!("{}{}{}", DIM, text, RESET)
 }
 
-/// Wrap text in bold ANSI codes. Returns text unchanged when `no_color` is true.
-pub fn bold(text: &str, no_color: bool) -> String {
-    if no_color {
-        text.to_string()
-    } else {
-        format!("{}{}{}", BOLD, text, RESET)
-    }
+/// Wrap text in bold ANSI codes.
+pub fn bold(text: &str) -> String {
+    format!("{}{}{}", BOLD, text, RESET)
 }
 
 /// Assemble the full statusline from parsed Claude Code JSON input.
-pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
+pub fn build_statusline(input: &StatusInput) -> String {
     // Extract model name
     let model_name = input
         .model
@@ -58,27 +50,22 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
 
     // Render context bar (if usage data available)
     let context_bar = match &usage {
-        Some(u) => context::render_bar(*u, &token_display, no_color),
+        Some(u) => context::render_bar(*u, &token_display),
         None => String::new(),
     };
     let context_bar = context_bar.trim_start();
 
     // Assemble output
-    let model_segment = dim(model_name, no_color);
+    let model_segment = dim(model_name);
 
     if context_bar.is_empty() {
-        format!(
-            "{}{}{}",
-            model_segment,
-            SEPARATOR,
-            dim(&formatted_dir, no_color)
-        )
+        format!("{}{}{}", model_segment, SEPARATOR, dim(&formatted_dir))
     } else {
         format!(
             "{}{}{}{}{}",
             model_segment,
             SEPARATOR,
-            dim(&formatted_dir, no_color),
+            dim(&formatted_dir),
             SEPARATOR,
             context_bar
         )
@@ -93,28 +80,16 @@ mod tests {
 
     #[test]
     fn dim_wraps_text_in_dim_ansi_codes() {
-        let result = super::dim("text", false);
+        let result = super::dim("text");
         assert_eq!(result, "\x1b[2mtext\x1b[0m");
-    }
-
-    #[test]
-    fn dim_returns_text_unchanged_when_no_color() {
-        let result = super::dim("text", true);
-        assert_eq!(result, "text");
     }
 
     // --- bold tests ---
 
     #[test]
     fn bold_wraps_text_in_bold_ansi_codes() {
-        let result = super::bold("text", false);
+        let result = super::bold("text");
         assert_eq!(result, "\x1b[1mtext\x1b[0m");
-    }
-
-    #[test]
-    fn bold_returns_text_unchanged_when_no_color() {
-        let result = super::bold("text", true);
-        assert_eq!(result, "text");
     }
 
     // --- build_statusline tests ---
@@ -142,7 +117,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
 
         assert!(
             result.contains("Claude Opus 4"),
@@ -185,7 +160,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
 
         // The separator is \u{2502} (box drawing vertical)
         let separator = " \u{2502} ";
@@ -212,7 +187,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
 
         // The separator is \u{2502} (box drawing vertical)
         let separator = " \u{2502} ";
@@ -245,7 +220,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
 
         assert!(
             !result.contains("\u{2502}  "),
@@ -272,7 +247,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
 
         assert!(
             !result.contains("\u{2588}"),
@@ -287,7 +262,7 @@ mod tests {
     #[test]
     fn build_statusline_with_minimal_input_does_not_panic() {
         let input = StatusInput::default();
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
         // Should produce some output (at minimum the model fallback "Claude")
         assert!(
             result.contains("Claude"),
@@ -306,7 +281,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
         assert!(
             result.contains("…/jamescarr/projects/myapp"),
             "should use cwd when workspace is missing: {}",
@@ -328,7 +303,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = super::build_statusline(&input, false);
+        let result = super::build_statusline(&input);
         assert!(
             result.contains("\u{2502}"),
             "should use box drawing vertical separator"
