@@ -1,6 +1,5 @@
 use crate::context;
 use crate::path_format;
-use crate::todos;
 use crate::types::StatusInput;
 
 const DIM: &str = "\x1b[2m";
@@ -47,12 +46,6 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
 
     let formatted_dir = path_format::format_directory(directory);
 
-    // Extract session_id
-    let session_id = input.session_id.as_deref().unwrap_or("");
-
-    // Get current task from todo files
-    let current_task = todos::get_current_task(session_id);
-
     // Compute context usage
     let (remaining_pct, used_pct) = match &input.context_window {
         Some(cw) => (cw.remaining_percentage, cw.used_percentage),
@@ -68,25 +61,27 @@ pub fn build_statusline(input: &StatusInput, no_color: bool) -> String {
         Some(u) => context::render_bar(u.scaled_used, u.raw_used, &token_display, no_color),
         None => String::new(),
     };
+    let context_bar = context_bar.trim_start();
 
     // Assemble output
     let model_segment = dim(model_name, no_color);
-    let dir_segment = format!("{}{}", dim(&formatted_dir, no_color), context_bar);
 
-    match current_task {
-        Some(task) => {
-            format!(
-                "{}{}{}{}{}",
-                model_segment,
-                SEPARATOR,
-                bold(&task, no_color),
-                SEPARATOR,
-                dir_segment
-            )
-        }
-        None => {
-            format!("{}{}{}", model_segment, SEPARATOR, dir_segment)
-        }
+    if context_bar.is_empty() {
+        format!(
+            "{}{}{}",
+            model_segment,
+            SEPARATOR,
+            dim(&formatted_dir, no_color)
+        )
+    } else {
+        format!(
+            "{}{}{}{}{}",
+            model_segment,
+            SEPARATOR,
+            dim(&formatted_dir, no_color),
+            SEPARATOR,
+            context_bar
+        )
     }
 }
 
