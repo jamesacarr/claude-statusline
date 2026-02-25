@@ -287,22 +287,107 @@ fn full_input_has_separator_between_dir_and_context_bar() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // The statusline should have the structure: model | dir | context_bar
-    // Split on the box-drawing separator to confirm three segments exist
+    // The statusline structure depends on whether the binary's JSON current_dir path exists
+    // as a git repo on the runner. On CI it does not exist, yielding 3 segments
+    // (model | dir | context_bar). Locally it may be a git repo, yielding 4 segments
+    // (model | dir | branch | context_bar). Both are valid.
+    let separator = " \u{2502} ";
+    let segments: Vec<&str> = stdout.trim_end().split(separator).collect();
+    assert!(
+        segments.len() == 3 || segments.len() == 4,
+        "expected 3 or 4 segments (model | dir | [branch] | context_bar), got {}: {:?}",
+        segments.len(),
+        stdout
+    );
+
+    // The last segment must contain bar graph characters, confirming context_bar is always last
+    let last = segments[segments.len() - 1];
+    assert!(
+        last.contains('\u{2588}') || last.contains('\u{2591}'),
+        "last segment should contain bar graph characters: {:?}",
+        last
+    );
+}
+
+// --- Test 13: Non-git dir omits branch segment ---
+
+#[test]
+fn non_git_dir_omits_branch_segment() {
+    let json = r#"{
+        "model": { "display_name": "Opus" },
+        "workspace": { "current_dir": "/tmp" },
+        "context_window": {
+            "total_input_tokens": 1000,
+            "total_output_tokens": 0,
+            "used_percentage": 10.0,
+            "remaining_percentage": 90.0
+        }
+    }"#;
+
+    let output = cmd()
+        .write_stdin(json)
+        .output()
+        .expect("command should execute");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
     let separator = " \u{2502} ";
     let segments: Vec<&str> = stdout.trim_end().split(separator).collect();
     assert_eq!(
         segments.len(),
         3,
-        "expected 3 segments (model | dir | context_bar), got {}: {:?}",
+        "expected 3 segments (model | dir | context_bar) for non-git dir, got {}: {:?}",
         segments.len(),
         stdout
     );
+}
 
-    // The third segment must contain bar graph characters, confirming context_bar is present
+// --- Test 14: Git repo tempdir includes branch segment ---
+
+#[test]
+fn git_repo_tempdir_includes_branch_segment() {
+    let tmp = tempfile::tempdir().unwrap();
+    let git_dir = tmp.path().join(".git");
+    std::fs::create_dir(&git_dir).unwrap();
+    std::fs::write(
+        git_dir.join("HEAD"),
+        "ref: refs/heads/integration-test-branch\n",
+    )
+    .unwrap();
+
+    let json = format!(
+        r#"{{
+            "model": {{ "display_name": "Opus" }},
+            "workspace": {{ "current_dir": "{}" }},
+            "context_window": {{
+                "total_input_tokens": 1000,
+                "total_output_tokens": 0,
+                "used_percentage": 10.0,
+                "remaining_percentage": 90.0
+            }}
+        }}"#,
+        tmp.path().to_string_lossy().replace('\\', "\\\\")
+    );
+
+    let output = cmd()
+        .write_stdin(json)
+        .output()
+        .expect("command should execute");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let separator = " \u{2502} ";
+    let segments: Vec<&str> = stdout.trim_end().split(separator).collect();
+    assert_eq!(
+        segments.len(),
+        4,
+        "expected 4 segments (model | dir | branch | context_bar) for git repo tempdir, got {}: {:?}",
+        segments.len(),
+        stdout
+    );
     assert!(
-        segments[2].contains('\u{2588}') || segments[2].contains('\u{2591}'),
-        "third segment should contain bar graph characters: {:?}",
-        segments[2]
+        stdout.contains("integration-test-branch"),
+        "expected output to contain branch name 'integration-test-branch', got: {}",
+        stdout
     );
 }
