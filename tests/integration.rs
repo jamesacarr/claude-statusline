@@ -65,7 +65,8 @@ fn valid_full_input_exits_zero_and_contains_expected_output() {
         .stdout(predicate::str::contains("\u{2588}"))
         .stdout(predicate::str::contains("\u{2591}"))
         .stdout(predicate::str::contains("8%"))
-        .stdout(predicate::str::contains("(19.8k)"));
+        // current_usage input tokens: 12000 + 500 + 200 = 12700
+        .stdout(predicate::str::contains("(12.7k)"));
 }
 
 // --- Test 2: Valid input with null optionals ---

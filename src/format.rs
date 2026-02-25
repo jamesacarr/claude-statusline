@@ -134,6 +134,7 @@ mod tests {
             context_window: Some(ContextWindow {
                 remaining_percentage: Some(92.0),
                 used_percentage: Some(8.0),
+                context_window_size: Some(200000),
                 total_input_tokens: Some(15234),
                 total_output_tokens: Some(4521),
                 ..Default::default()
@@ -156,7 +157,8 @@ mod tests {
             "should contain bar graph filled blocks"
         );
         assert!(result.contains("8%"), "should contain raw percentage");
-        assert!(result.contains("(19.8k)"), "should contain token count");
+        // 8% of 200000 = 16000
+        assert!(result.contains("(16.0k)"), "should contain token count");
     }
 
     #[test]
