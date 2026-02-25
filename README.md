@@ -4,14 +4,35 @@ A fast Rust binary that reads Claude Code JSON from stdin and writes a formatted
 
 ## Install
 
+### Pre-built binaries
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/jamesacarr/claud-statusline/releases):
+
+| Platform      | Archive                        |
+|---------------|--------------------------------|
+| Linux (x64)   | `claud-statusline-linux-x64.tar.gz`   |
+| Linux (arm64)  | `claud-statusline-linux-arm64.tar.gz` |
+| macOS (arm64)  | `claud-statusline-macos-arm64.tar.gz`|
+| Windows (x64)  | `claud-statusline-windows-x64.zip`   |
+
+Extract the binary and place it somewhere on your `PATH`.
+
+### Cargo
+
+```sh
+cargo install --git https://github.com/jamesacarr/claud-statusline.git
+```
+
+### From source
+
 ```sh
 cargo install --path .
 ```
 
-Or build a release binary:
+Or build the release binary directly:
 
 ```sh
-make release
+cargo build --release
 ```
 
 ## Usage
