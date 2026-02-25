@@ -7,4 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-02-25
+
 Initial release
+
+[Unreleased]: https://github.com/jamesacarr/claude-statusline/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/jamesacarr/claude-statusline/compare/b5f62debb83896c0effec960831db1885f27a851...v1.0.0
