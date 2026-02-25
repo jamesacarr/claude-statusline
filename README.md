@@ -29,19 +29,6 @@ Add `claude-statusline` as a [custom status line](https://code.claude.com/docs/e
 
 Claude Code pipes JSON session data (model, context window, costs, etc.) to the command via stdin and displays whatever it prints to stdout.
 
-### Disable ANSI colors
-
-Set `NO_COLOR` to strip color output:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "NO_COLOR=1 claude-statusline"
-  }
-}
-```
-
 ## Development
 
 ```sh
