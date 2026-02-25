@@ -18,7 +18,6 @@ The bridge file is written via a write-then-rename pattern to avoid partial read
 
 | Variable | Purpose | Referenced in |
 |----------|---------|--------------|
-| `NO_COLOR` | When present (any value including empty), disables ANSI colour sequences in output — follows the [no-color.org](https://no-color.org) convention | `src/main.rs` |
 
 No `.env` files or secret stores are used. The binary is stateless and holds no credentials.
 
@@ -30,5 +29,5 @@ No `.env` files or secret stores are used. The binary is stateless and holds no 
 ### Prescriptive Guidance
 - Do not add network calls or external SDK dependencies — this binary must remain a fast, offline, pipe-safe tool
 - If a new filesystem path is needed, follow the pattern in `src/todos.rs` and `src/bridge.rs`: accept a `&Path` parameter in an internal function and expose a public wrapper that resolves the real path; this keeps the code testable with `tempfile`
-- New env var checks should be placed in `src/main.rs` alongside the existing `NO_COLOR` check and passed as parameters into library functions rather than read inside library modules
+- New env var checks should be placed in `src/main.rs` and passed as parameters into library functions rather than read inside library modules
 - Do not read env vars inside `src/lib.rs` modules — keep side-effect-free logic in the library, side-effectful wiring in `src/main.rs`

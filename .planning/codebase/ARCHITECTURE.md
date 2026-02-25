@@ -67,8 +67,6 @@ Errors from `run()` are swallowed via `unwrap_or_default()` — the binary alway
 
 **Best-effort side-effects.** `bridge::write_bridge()` uses atomic rename (`write → .tmp → rename`) and silently discards all errors — the statusline output is never blocked by bridge failures (`src/bridge.rs:52-57`).
 
-**`NO_COLOR` compliance.** The binary checks `std::env::var("NO_COLOR").is_ok()` rather than `is_terminal()` because Claude Code pipes stdout; presence of the variable (any value) disables ANSI codes (`src/main.rs:21`).
-
 **Stdin size cap.** Input is capped at 1 MiB (`take(1_048_576)`) to prevent runaway memory usage from unexpected large inputs (`src/main.rs:13`).
 
 **Release profile aggressively optimised.** `Cargo.toml` configures `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"`, `strip = "symbols"` for minimal binary size.
