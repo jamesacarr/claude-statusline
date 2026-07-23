@@ -1,4 +1,5 @@
 use crate::context;
+use crate::cost;
 use crate::git_branch;
 use crate::path_format;
 use crate::types::StatusInput;
@@ -67,6 +68,10 @@ pub fn build_statusline(input: &StatusInput) -> String {
         segments.push(dim(branch_name));
     }
 
+    if let Some(cost_display) = cost::format_cost(&input.cost) {
+        segments.push(dim(&cost_display));
+    }
+
     if !context_bar.is_empty() {
         segments.push(context_bar.to_string());
     }
@@ -76,7 +81,7 @@ pub fn build_statusline(input: &StatusInput) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{ContextWindow, ModelInfo, StatusInput, WorkspaceInfo};
+    use crate::types::{ContextWindow, CostInfo, ModelInfo, StatusInput, WorkspaceInfo};
 
     // --- dim tests ---
 
@@ -399,6 +404,80 @@ mod tests {
         assert!(
             result.contains("test-branch"),
             "expected output to contain branch name 'test-branch', got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_places_cost_between_branch_and_context_bar() {
+        let tmp = tempfile::tempdir().unwrap();
+        let git_dir = tmp.path().join(".git");
+        std::fs::create_dir(&git_dir).unwrap();
+        std::fs::write(git_dir.join("HEAD"), "ref: refs/heads/cost-branch\n").unwrap();
+
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some(tmp.path().to_string_lossy().to_string()),
+                ..Default::default()
+            }),
+            cost: Some(CostInfo {
+                total_cost_usd: Some(0.42),
+                ..Default::default()
+            }),
+            context_window: Some(ContextWindow {
+                used_percentage: Some(10.0),
+                total_input_tokens: Some(1000),
+                total_output_tokens: Some(0),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let result = super::build_statusline(&input);
+        let separator = " \u{2502} ";
+        let segments: Vec<&str> = result.split(separator).collect();
+
+        // model | dir | branch | cost | context_bar
+        assert_eq!(
+            segments.len(),
+            5,
+            "expected 5 segments with cost, got: {}",
+            result
+        );
+        assert!(
+            segments[3].contains("$0.42"),
+            "cost segment should sit between branch and context bar, got: {}",
+            result
+        );
+        assert!(
+            segments[4].contains('\u{2588}') || segments[4].contains('\u{2591}'),
+            "context bar should remain last, got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn build_statusline_omits_cost_segment_when_cost_is_none() {
+        let input = StatusInput {
+            model: Some(ModelInfo {
+                display_name: Some("Opus".to_string()),
+                ..Default::default()
+            }),
+            workspace: Some(WorkspaceInfo {
+                current_dir: Some("/tmp".to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let result = super::build_statusline(&input);
+        assert!(
+            !result.contains('$'),
+            "should not contain a cost segment when cost is absent, got: {}",
             result
         );
     }

@@ -66,7 +66,9 @@ fn valid_full_input_exits_zero_and_contains_expected_output() {
         .stdout(predicate::str::contains("\u{2591}"))
         .stdout(predicate::str::contains("30%"))
         // current_usage input tokens: 50000 + 5000 + 5000 = 60000
-        .stdout(predicate::str::contains("(60.0k)"));
+        .stdout(predicate::str::contains("(60.0k)"))
+        // total_cost_usd: 0.05
+        .stdout(predicate::str::contains("$0.05"));
 }
 
 // --- Test 2: Valid input with null optionals ---
@@ -288,14 +290,14 @@ fn full_input_has_separator_between_dir_and_context_bar() {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // The statusline structure depends on whether the binary's JSON current_dir path exists
-    // as a git repo on the runner. On CI it does not exist, yielding 3 segments
-    // (model | dir | context_bar). Locally it may be a git repo, yielding 4 segments
-    // (model | dir | branch | context_bar). Both are valid.
+    // as a git repo on the runner. full_json() includes cost, so on CI (no git repo) it
+    // yields 4 segments (model | dir | cost | context_bar). Locally, inside a git repo, it
+    // yields 5 (model | dir | branch | cost | context_bar). Both are valid.
     let separator = " \u{2502} ";
     let segments: Vec<&str> = stdout.trim_end().split(separator).collect();
     assert!(
-        segments.len() == 3 || segments.len() == 4,
-        "expected 3 or 4 segments (model | dir | [branch] | context_bar), got {}: {:?}",
+        segments.len() == 4 || segments.len() == 5,
+        "expected 4 or 5 segments (model | dir | [branch] | cost | context_bar), got {}: {:?}",
         segments.len(),
         stdout
     );

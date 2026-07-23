@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Session cost segment showing `total_cost_usd` (e.g. `$0.05`) between the git branch and context usage. Omitted when no cost data is present.
+
 ## [1.0.0] - 2026-02-25
 
 Initial release
