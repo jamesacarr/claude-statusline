@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-24
+
 ### Added
 
 - Session cost segment showing `total_cost_usd` (e.g. `$0.05`) between the git branch and context usage. Omitted when no cost data is present.
@@ -15,5 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release
 
-[Unreleased]: https://github.com/jamesacarr/claude-statusline/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jamesacarr/claude-statusline/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/jamesacarr/claude-statusline/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jamesacarr/claude-statusline/compare/b5f62debb83896c0effec960831db1885f27a851...v1.0.0
